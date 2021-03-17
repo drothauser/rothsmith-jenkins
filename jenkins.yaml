@@ -28,11 +28,11 @@ Parameters:
   DnsPrefix:
     Description: Prefix for Jenkins' DNS record (<prefix>.<zone>)
     Type: String
-    Default: jenkins
+    Default: jenkins1
   DnsZone:
     Description: Route53-hosted zone to use for the DNS record (<prefix>.<zone>)
     Type: String
-    Default: thefactory.com
+    Default: 'rothsmith.net'
   DockerImage:
     Description: >-
       Path of the Jenkins Docker image (format:
@@ -42,7 +42,7 @@ Parameters:
   S3Bucket:
     Description: Existing S3 bucket to use for Jenkins backups and restores
     Type: String
-    Default: thefactory-jenkins
+    Default: 'rothsmith-mys3bucket'
   S3Prefix:
     Description: '[Optional] Key prefix to use for Jenkins backups'
     Type: String
@@ -61,7 +61,8 @@ Parameters:
 Mappings:
   RegionMap:
     us-east-1:
-      AMI: ami-f40bbe9c
+      #AMI: ami-f40bbe9c      
+      AMI: ami-08a29dcf20b8fea61
     us-west-1:
       AMI: ami-cfe2ea8a
     us-west-2:
@@ -262,7 +263,7 @@ Resources:
               function error_exit
             - |
               {
-            - '  cfn-signal -e 1 -r "$1" '''
+            - '  /opt/aws/bin/cfn-init/cfn-signal -e 1 -r "$1" '''
             - !Ref WaitHandle
             - |
               '
@@ -270,7 +271,12 @@ Resources:
                 exit 1
             - |
               }
-            - 'cfn-init -s '
+            - |
+              yum install -y python-pip
+            - |
+              /usr/bin/easy_install --script-dir /opt/aws/bin 'https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz'
+            - |
+            - '/opt/aws/bin/cfn-init -s '
             - !Ref 'AWS::StackName'
             - ' -r LaunchConfig '
             - '    --access-key '
@@ -316,7 +322,7 @@ Resources:
               runit-service enable jenkins
             - |
               # All is well, signal success
-            - cfn-signal -e 0 -r "Stack setup complete" '
+            - /opt/aws/bin/cfn-signal -e 0 -r "Stack setup complete" '
             - !Ref WaitHandle
             - |
               '
